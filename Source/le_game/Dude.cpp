@@ -10,6 +10,7 @@
 //#include "PaperSpriteComponent.h"
 #include "PaperCharacter.h"
 #include "Components/ArrowComponent.h"
+#include "DirectionHelper.h"
 //#include "GameFramework/Character.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -192,6 +193,9 @@ void ADude::Tick(float DeltaTime) {
 		look_dir.Set(movement_dir.GetComponentForAxis(EAxis::X), movement_dir.GetComponentForAxis(EAxis::Y), movement_dir.GetComponentForAxis(EAxis::Z));
 	}
 
+	 DirectionHelper::DirectionKeyFromVector(look_dir);
+
+
 	_aiming = false;
 
 	MovementDirectionArrow->SetWorldRotation(movement_dir.Rotation());
@@ -224,4 +228,12 @@ void ADude::OnAimEnd() {
 	_aiming = false;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+int ADude::GetMovementDirectionKey() {
+	return DirectionHelper::DirectionKeyFromVector(movement_dir);
+}
+
+int ADude::GetFacingDirectionKey() {
+	return DirectionHelper::DirectionKeyFromVector(look_dir);
 }

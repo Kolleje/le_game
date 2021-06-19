@@ -70,6 +70,15 @@ public:
 	FORCEINLINE class UCameraComponent* GetFollowCamera() const { return FollowCamera; }
 
 	virtual void Tick(float DeltaTime) override;
+	
+	//  direction key for movement
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Direction")
+	UFUNCTION(BlueprintCallable, Category = "Direction")
+	int GetMovementDirectionKey();
+
+	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Direction")
+	UFUNCTION(BlueprintCallable, Category = "Direction")
+	int GetFacingDirectionKey();
 
 private:
 	int tick_count = 0;
