@@ -11,6 +11,7 @@
 #include "PaperCharacter.h"
 #include "Components/ArrowComponent.h"
 #include "DirectionHelper.h"
+#include "Constants.h"
 //#include "GameFramework/Character.h"
 
 //////////////////////////////////////////////////////////////////////////
@@ -64,6 +65,9 @@ ADude::ADude()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named MyCharacter (to avoid direct content references in C++)
+
+	GetCharacterMovement()->MaxWalkSpeed = 200;
+	base_speed = GetCharacterMovement()->MaxWalkSpeed;
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -82,6 +86,8 @@ void ADude::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponen
 	PlayerInputComponent->BindAxis("FaceX", this, &ADude::FaceX);
 	PlayerInputComponent->BindAxis("FaceY", this, &ADude::FaceY);
 
+	PlayerInputComponent->BindAction("Sprint", IE_Pressed, this, &ADude::OnSprint);
+	PlayerInputComponent->BindAction("Sprint", IE_Released, this, &ADude::OnSprintEnd);
 	// We have 2 versions of the rotation bindings to handle different kinds of devices differently
 	// "turn" handles devices that provide an absolute delta, such as a mouse.
 	// "turnrate" is for devices that we choose to treat as a rate of change, such as an analog joystick
@@ -119,38 +125,18 @@ void ADude::LookUpAtRate(float Rate)
 
 void ADude::MoveX(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if (Controller != nullptr)
 	{
-		//// find out which way is forward
-		//const FRotator Rotation = Controller->GetControlRotation();
-		//const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		//// get forward vector
-		//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-
-		const FVector Dir = FVector(1.f, 0.f, 0.f);
-
-		AddMovementInput(Dir, Value);
 		movement_dir.SetComponentForAxis(EAxis::X, Value);
 	}
 }
 
 void ADude::MoveY(float Value)
 {
-	if ((Controller != nullptr) && (Value != 0.0f))
+	if (Controller != nullptr)
 	{
-		//// find out which way is right
-		//const FRotator Rotation = Controller->GetControlRotation();
-		//const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		//// get right vector 
-		//const FVector Direction = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		const FVector Dir = FVector(0.f, 1.f, 0.f);
-		// add movement in that direction
-
-		AddMovementInput(Dir, -Value);
 		movement_dir.SetComponentForAxis(EAxis::Y, -Value);
+
 	}
 }
 
@@ -177,30 +163,36 @@ void ADude::FaceY(float Value)
 void ADude::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
 
+	if (_sprinting) _aiming = false;
+
 	if (_aiming) {
-		//FRotator cameraRotation = CameraBoom->GetTargetRotation();
 
-		//FVector offset = FVector(top_axis, right_axis, 0);
-		//right_axis = 0;
-		//top_axis = 0;
-
-		//const FRotator lookRotation = offset.Rotation();
-
-		//SetActorRotation(lookRotation);
-		
 	}
 	else {
-		look_dir.Set(movement_dir.GetComponentForAxis(EAxis::X), movement_dir.GetComponentForAxis(EAxis::Y), movement_dir.GetComponentForAxis(EAxis::Z));
+		if (!movement_dir.IsNearlyZero()) look_dir.Set(movement_dir.GetComponentForAxis(EAxis::X), movement_dir.GetComponentForAxis(EAxis::Y), movement_dir.GetComponentForAxis(EAxis::Z));
 	}
-
-	 DirectionHelper::DirectionKeyFromVector(look_dir);
-
 
 	_aiming = false;
 
-	MovementDirectionArrow->SetWorldRotation(movement_dir.Rotation());
+	if (!movement_dir.IsNearlyZero()) MovementDirectionArrow->SetWorldRotation(movement_dir.Rotation());
+	else MovementDirectionArrow->SetWorldRotation(look_dir.Rotation());
 	//DirectionArrow->AddWorldRotation(FRotator(0.f, 0.f, 25.f));
 	FacingArrow->SetWorldRotation(look_dir.Rotation());
+
+	direction_offset = DirectionHelper::GetMovementFacingOffset(movement_dir, look_dir);
+
+	float speed = movement_dir.Size();
+
+	FString speedText = TEXT("speed: ") + FString::FromInt(direction_offset);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, speedText);
+
+
+	if (direction_offset == LG_SIDE) speed = speed * 0.7f;
+	if (direction_offset == LG_BACK) speed = speed * 0.3f;
+
+	movement_state = DirectionHelper::GetMovementState(speed, base_speed, direction_offset);
+
+	if (!movement_dir.IsNearlyZero()) AddMovementInput(movement_dir, speed);
 
 	tick_count++;
 	time_passed += DeltaTime;
@@ -228,6 +220,16 @@ void ADude::OnAimEnd() {
 	_aiming = false;
 	//GetCharacterMovement()->bUseControllerDesiredRotation = false;
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+}
+
+void ADude::OnSprint() {
+	GetCharacterMovement()->MaxWalkSpeed = 1.5 * base_speed;
+	_sprinting = true;
+}
+
+void ADude::OnSprintEnd() {
+	GetCharacterMovement()->MaxWalkSpeed = base_speed;
+	_sprinting = false;
 }
 
 int ADude::GetMovementDirectionKey() {

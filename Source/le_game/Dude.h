@@ -63,6 +63,9 @@ protected:
 	void OnAim();
 	void OnAimEnd();
 
+	void OnSprint();
+	void OnSprintEnd();
+
 public:
 	/** Returns CameraBoom subobject **/
 	FORCEINLINE class USpringArmComponent* GetCameraBoom() const { return CameraBoom; }
@@ -71,21 +74,59 @@ public:
 
 	virtual void Tick(float DeltaTime) override;
 	
-	//  direction key for movement
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Direction")
-	UFUNCTION(BlueprintCallable, Category = "Direction")
+	/**
+	 * returns int corresponding to current movement direction
+	 * 0 down
+	 * 1 down left
+	 * 2 left
+	 * 3 up left
+	 * 4 up
+	 * 5 up right
+	 * 6 right
+	 * 7 down right
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	int GetMovementDirectionKey();
 
-	//UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Direction")
-	UFUNCTION(BlueprintCallable, Category = "Direction")
+	/**
+	 * returns int corresponding to current facing direction
+	 * 0 down
+	 * 1 down left
+	 * 2 left
+	 * 3 up left
+	 * 4 up
+	 * 5 up right
+	 * 6 right
+	 * 7 down right
+	*/
+	UFUNCTION(BlueprintCallable, Category = "Control")
 	int GetFacingDirectionKey();
 
+
+	/**
+	* returns int corresponding to current movement state
+	* 0 idle
+	* 1 walking
+	* 2 running
+	* 3 sprinting
+	* 4 walking sideways
+	* 5 running sieways
+	* 6 walking backwards
+	* 7 running backwards
+	*/ 
+	UFUNCTION(BlueprintCallable, Category = "Control")
+	int GetMovementState() { return movement_state; }
+
 private:
+	int movement_state = 0;
+	int direction_offset = 0;
 	int tick_count = 0;
 	float time_passed = 0;
 	bool _aiming = false;
+	bool _sprinting = false;
 	float right_axis = 0;
 	float top_axis = 0;
+	float base_speed = 0;
 	FVector movement_dir = FVector(0.f);
 	FVector look_dir = FVector(0.f);
 

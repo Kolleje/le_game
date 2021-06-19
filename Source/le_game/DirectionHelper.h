@@ -2,7 +2,7 @@
 
 #pragma once
 #include "CoreMinimal.h"
-//#include "MathUtil.h"
+#include "Constants.h"
 
 /**
  * 
@@ -40,7 +40,64 @@ public:
 			GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, xy);
 		}
 		*/
-
 		return result;
+	}
+
+	static int GetMovementFacingOffset(FVector movement_dir = FVector(0.f), FVector facing_dir = FVector(0.f)) {
+		int movement_key = DirectionKeyFromVector(movement_dir);
+		int facing_key = DirectionKeyFromVector(facing_dir);
+
+		if (movement_key == facing_key) return LG_FORWARD;
+
+		int offset = std::abs(movement_key - facing_key);
+		
+		if (offset > 4) offset = 8 - offset;
+
+		if (offset < 3) return LG_SIDE;
+		return LG_BACK;
+	}
+
+	/**
+	* returns int corresponding to current movement state
+	* 0 idle
+	* 1 walking
+	* 2 running
+	* 3 sprinting
+	* 4 walking sideways
+	* 5 running sideways
+	* 6 walking backwards
+	* 7 running backwards
+	*/
+
+	static int GetMovementState(float velocity, float max_velocity, int offset) {
+		if (velocity == 0.f) return 0;
+		if (velocity > max_velocity) return 3;
+
+		if (offset == LG_FORWARD) {
+			if (velocity < 0.5f * max_velocity) return LG_WALK;
+			return LG_RUN;
+		}
+
+		if (offset == LG_SIDE) {
+			if (velocity < 0.5f * max_velocity) return LG_WALK_SIDE;
+			return LG_RUN_SIDE;
+		}
+
+		if (offset == LG_BACK) {
+			if (velocity < 0.5f * max_velocity) return LG_WALK_BACK;
+			return LG_RUN_BACK;
+		}
+
+		return 0;
+	}
+
+	static int GetMovementState(float velocity, float max_velocity, FVector movement_dir = FVector(0.f), FVector facing_dir = FVector(0.f)) {
+		if (velocity == 0.f) return 0;
+		if (velocity > max_velocity) return 3;
+
+		int offset = GetMovementFacingOffset(movement_dir, facing_dir);
+
+		return GetMovementState(velocity, max_velocity, offset);
+
 	}
 };
