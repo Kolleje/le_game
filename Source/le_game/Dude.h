@@ -13,7 +13,7 @@ class ADude : public APaperCharacter
 	GENERATED_BODY()
 
 		/** Camera boom positioning the camera behind the character */
-		UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 		class USpringArmComponent* CameraBoom;
 
 	/** Follow camera */
@@ -137,5 +137,13 @@ private:
 	// Show 360 facing arrow
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
 	class UArrowComponent* FacingArrow;
+
+	// fraction of max walk speed that is used when moving sideways / strafing
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	float sideways_factor = 0.7;
+
+	// fraction of max walk speed that is used when moving backwards
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	float backwards_factor = 0.3;
 };
 

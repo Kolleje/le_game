@@ -183,12 +183,12 @@ void ADude::Tick(float DeltaTime) {
 
 	float speed = movement_dir.Size();
 
-	FString speedText = TEXT("speed: ") + FString::FromInt(direction_offset);
-	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, speedText);
+	/*FString speedText = TEXT("speed: ") + FString::FromInt(direction_offset);
+	GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, speedText);*/
 
 
-	if (direction_offset == LG_SIDE) speed = speed * 0.7f;
-	if (direction_offset == LG_BACK) speed = speed * 0.3f;
+	if (direction_offset == LG_SIDE) speed = speed * sideways_factor;
+	if (direction_offset == LG_BACK) speed = speed * backwards_factor;
 
 	movement_state = DirectionHelper::GetMovementState(speed, base_speed, direction_offset);
 
@@ -198,11 +198,8 @@ void ADude::Tick(float DeltaTime) {
 	time_passed += DeltaTime;
 	if (GEngine && tick_count >= 200) {
 		float fps = tick_count / time_passed;
-		//std::string f_str = std::to_string(fps);
-		//FString xy = TEXT("fps: ") + FString::SanitizeFloat(fps);
-		//FString f_str = (_aiming ? "true" : "false");
-		//FString xy = TEXT("aiming: ") + f_str; //+ FString::SanitizeFloat(fps);
-		FString xy = TEXT("right: ") + FString::SanitizeFloat(right_axis) + TEXT("top: ") + FString::SanitizeFloat(top_axis);
+		FString xy = TEXT("fps: ") + FString::SanitizeFloat(fps);
+		//FString xy = TEXT("right: ") + FString::SanitizeFloat(right_axis) + TEXT("top: ") + FString::SanitizeFloat(top_axis);
 		tick_count = 0;
 		time_passed = 0;
 		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, TEXT("Some debug message!"));
