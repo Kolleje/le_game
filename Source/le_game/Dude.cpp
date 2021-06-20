@@ -105,6 +105,9 @@ void ADude::SetupPlayerInputComponent(class UInputComponent* PlayerInputComponen
 
 	PlayerInputComponent->BindAction("Aim", IE_Pressed, this, &ADude::OnAim);
 	PlayerInputComponent->BindAction("Aim", IE_Released, this, &ADude::OnAimEnd);
+
+	PlayerInputComponent->BindAction("AttackButtonR1", IE_Pressed, this, &ADude::OnAttackR1);
+	//PlayerInputComponent->BindAction("Aim", IE_Released, this, &ADude::OnAttackR1Release);
 }
 
 // Replicated Properties
@@ -178,9 +181,12 @@ void ADude::FaceY(float Value)
 
 void ADude::Tick(float DeltaTime) {
 	Super::Tick(DeltaTime);
+	int new_movement_state;
+	int new_direction_state;
 
 	//if (GetLocalRole() == ROLE_Authority) {
 	if (IsLocallyControlled()) {
+
 		if (_sprinting) _aiming = false;
 
 		if (_aiming) {
@@ -192,15 +198,9 @@ void ADude::Tick(float DeltaTime) {
 
 		_aiming = false;
 
-		//FString dir = TEXT("X: ") + FString::SanitizeFloat(movement_dir.GetComponentForAxis(EAxis::X)) + TEXT("    Y: ") + FString::SanitizeFloat(movement_dir.GetComponentForAxis(EAxis::Y));
-		//GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, dir);
-
 		direction_offset = DirectionHelper::GetMovementFacingOffset(movement_dir, look_dir);
 
 		float speed = movement_dir.Size();
-
-		/*FString speedText = TEXT("speed: ") + FString::FromInt(direction_offset);
-		GEngine->AddOnScreenDebugMessage(-1, 15.0f, FColor::Yellow, speedText);*/
 
 		if (!_sprinting) {
 			if (direction_offset == LG_FORWARD) speed = speed * forwards_factor;
@@ -210,9 +210,15 @@ void ADude::Tick(float DeltaTime) {
 
 		int base_speed = GetCharacterMovement()->MaxWalkSpeed;
 
-		int new_movement_state = DirectionHelper::GetMovementState(speed, base_speed, direction_offset);
+		if (bIsAttacking) {
+			new_movement_state = 8;
+			new_direction_state = direction_state;
+		}
+		else {
+			new_movement_state = DirectionHelper::GetMovementState(speed, base_speed, direction_offset);
+			new_direction_state = DirectionHelper::DirectionKeyFromVector(look_dir);
+		}
 
-		int new_direction_state = DirectionHelper::DirectionKeyFromVector(look_dir);
 
 		if (new_movement_state != movement_state || new_direction_state != direction_state) {
 			HandleMovementStateUpdate(new_movement_state, new_direction_state);
@@ -223,7 +229,7 @@ void ADude::Tick(float DeltaTime) {
 		movement_state = new_movement_state;
 		direction_state = new_direction_state;
 
-		if (!movement_dir.IsNearlyZero()) AddMovementInput(movement_dir, speed);
+		if (!bIsAttacking && !movement_dir.IsNearlyZero()) AddMovementInput(movement_dir, speed);
 
 		//tick_count++;
 		//time_passed += DeltaTime;
@@ -345,4 +351,27 @@ void ADude::HandleMovementStateUpdate_Implementation(int ms, int ds) {
 	}
 	movement_state_rep = ms;
 	direction_state_rep = ds;
+}
+
+
+void ADude::OnAttackR1() {
+	if (!bIsAttacking)
+	{
+		bIsAttacking = true;
+		UWorld* World = GetWorld();
+		World->GetTimerManager().SetTimer(AttackTimer, this, &ADude::OnAttackEnd, AttackCooldown, false);
+		UseSkill(1);
+	}
+}
+
+void ADude::OnAttackR1Release() {
+
+}
+
+void ADude::OnAttackEnd() {
+	bIsAttacking = false;
+}
+
+void ADude::UseSkill_Implementation(int skil_id) {
+	//create damaging area
 }

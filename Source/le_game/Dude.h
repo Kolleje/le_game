@@ -66,6 +66,11 @@ protected:
 	void OnAim();
 	void OnAimEnd();
 
+	void OnAttackR1();
+	void OnAttackR1Release();
+
+	void OnAttackEnd();
+
 	void OnSprint();
 	void OnSprintEnd();
 
@@ -81,6 +86,8 @@ protected:
 
 	int movement_state = 0;
 	int direction_state = 0;
+
+	bool bIsAttacking = false;
 
 	UPROPERTY(ReplicatedUsing = OnRep_MovementState)
 	int movement_state_rep = 0;
@@ -104,6 +111,14 @@ protected:
 
 	UFUNCTION(Server, unreliable)
 	void HandleMovementStateUpdate(int ms, int ds);
+
+	UFUNCTION(Server, reliable)
+	void UseSkill(int skill_id);
+
+	FTimerHandle AttackTimer;
+
+	UPROPERTY(EditDefaultsOnly, Category = "Gameplay")
+	float AttackCooldown = 0.7f;
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -152,6 +167,7 @@ public:
 	* 5 running sieways
 	* 6 walking backwards
 	* 7 running backwards
+	* 8 attack_1
 	*/ 
 	UFUNCTION(BlueprintCallable, Category = "Control")
 	int GetMovementState() { return movement_state; }
