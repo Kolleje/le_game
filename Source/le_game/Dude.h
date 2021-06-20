@@ -22,6 +22,9 @@ class ADude : public APaperCharacter
 public:
 	ADude();
 
+	//required network stuff
+	void GetLifetimeReplicatedProps(TArray<FLifetimeProperty>& OutLifetimeProps) const override;
+
 	/** Base turn rate, in deg/sec. Other scaling may affect final turn rate. */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera)
 		float BaseTurnRate;
@@ -65,6 +68,42 @@ protected:
 
 	void OnSprint();
 	void OnSprintEnd();
+
+	void OnHealthButton();
+
+	int direction_offset = 0;
+	int tick_count = 0;
+	float time_passed = 0;
+	bool _aiming = false;
+	bool _sprinting = false;
+	float right_axis = 0;
+	float top_axis = 0;
+
+	int movement_state = 0;
+	int direction_state = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_MovementState)
+	int movement_state_rep = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_DirectionState)
+	int direction_state_rep = 0;
+
+	UPROPERTY(ReplicatedUsing = OnRep_CurrentHealth)
+	float CurrentHealth;
+
+	UFUNCTION()
+	void OnRep_CurrentHealth();
+
+	UFUNCTION()
+	void OnRep_MovementState();
+	
+	UFUNCTION()
+	void OnRep_DirectionState();
+
+	void OnHealthUpdate();
+
+	UFUNCTION(Server, unreliable)
+	void HandleMovementStateUpdate(int ms, int ds);
 
 public:
 	/** Returns CameraBoom subobject **/
@@ -118,16 +157,13 @@ public:
 	int GetMovementState() { return movement_state; }
 
 private:
-	int movement_state = 0;
-	int direction_offset = 0;
-	int tick_count = 0;
-	float time_passed = 0;
-	bool _aiming = false;
-	bool _sprinting = false;
-	float right_axis = 0;
-	float top_axis = 0;
-	float base_speed = 0;
+	//UFUNCTION()
+	//void OnRep_ms();
+
+	//UPROPERTY(Replicated)
 	FVector movement_dir = FVector(0.f);
+	
+	//UPROPERTY(Replicated)
 	FVector look_dir = FVector(0.f);
 
 	// Show 360 facing arrow
@@ -138,12 +174,18 @@ private:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Debug", meta = (AllowPrivateAccess = "true"))
 	class UArrowComponent* FacingArrow;
 
+	// fraction of max walk speed that is used when moving forwards
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control", meta = (AllowPrivateAccess = "true"))
+	float forwards_factor = 0.6;
+
 	// fraction of max walk speed that is used when moving sideways / strafing
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control", meta = (AllowPrivateAccess = "true"))
-	float sideways_factor = 0.7;
+	float sideways_factor = 0.4;
 
 	// fraction of max walk speed that is used when moving backwards
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Control", meta = (AllowPrivateAccess = "true"))
-	float backwards_factor = 0.3;
+	float backwards_factor = 0.2;
+
+
 };
 

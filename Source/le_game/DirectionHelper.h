@@ -47,12 +47,10 @@ public:
 		int movement_key = DirectionKeyFromVector(movement_dir);
 		int facing_key = DirectionKeyFromVector(facing_dir);
 
-		if (movement_key == facing_key) return LG_FORWARD;
-
 		int offset = std::abs(movement_key - facing_key);
-		
 		if (offset > 4) offset = 8 - offset;
 
+		if (offset < 2) return LG_FORWARD;
 		if (offset < 3) return LG_SIDE;
 		return LG_BACK;
 	}
@@ -71,20 +69,20 @@ public:
 
 	static int GetMovementState(float velocity, float max_velocity, int offset) {
 		if (velocity == 0.f) return 0;
-		if (velocity > max_velocity) return 3;
+		if (velocity > 0.7 * max_velocity) return 3;
 
 		if (offset == LG_FORWARD) {
-			if (velocity < 0.5f * max_velocity) return LG_WALK;
+			if (velocity < 0.25f * max_velocity) return LG_WALK;
 			return LG_RUN;
 		}
 
 		if (offset == LG_SIDE) {
-			if (velocity < 0.5f * max_velocity) return LG_WALK_SIDE;
+			if (velocity < 0.25f * max_velocity) return LG_WALK_SIDE;
 			return LG_RUN_SIDE;
 		}
 
 		if (offset == LG_BACK) {
-			if (velocity < 0.5f * max_velocity) return LG_WALK_BACK;
+			if (velocity < 0.25f * max_velocity) return LG_WALK_BACK;
 			return LG_RUN_BACK;
 		}
 
